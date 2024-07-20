@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "microservice-python-fastapi"
+version = "0.1.0"
+description = ""
+authors = ["Bohdan Obruch <bodan1992@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+pytest = "^8.3.1"
+allure-pytest = "^2.13.5"
+jsonschema = "^4.23.0"
+pydantic = "^2.8.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+addopts = """
+        --alluredir allure-results
+        """
