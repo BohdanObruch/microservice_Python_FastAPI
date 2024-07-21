@@ -1,41 +1,110 @@
-import allure
+from datetime import datetime, timezone
 
-from api.base_api import Api
+from fastapi import APIRouter, Response
+from fastapi.responses import JSONResponse
+import json
+
+from model_data.create_user_model import User
+from model_data.register_user_model import RegisterUser
+from model_data.login_user_model import LoginUser
+
+from utils.paths import path_file
+from utils.random_data import fake_user_data
+
+data = fake_user_data()
+
+router = APIRouter()
 
 
-class UserApi(Api):
+class UserApi:
+    _URL = 'http://127.0.0.1:8000'
 
-    # ENDPOINTS:
+    @staticmethod
+    def read_users():
+        with open(path_file('users.txt'), 'r') as file:
+            return json.load(file)
 
-    _ENDPOINT_USER = '/api/users/'
-    _ENDPOINT_REGISTER_USER = '/api/register'
+    @staticmethod
+    def write_users(users):
+        with open(path_file('users.txt'), 'w') as file:
+            json.dump(users, file)
 
-    @allure.step('Get list of users')
-    def get_list_user(self):
-        return self.get(url=Api._URL, endpoint=self._ENDPOINT_USER)
+    def update_user(self, user_id: int, user: dict):
+        users = self.read_users()
+        for existing_user in users:
+            if existing_user["id"] == user_id:
+                existing_user.update(user)
+                existing_user["updatedAt"] = datetime.now(timezone.utc).isoformat()
+                self.write_users(users)
+                return JSONResponse(content=existing_user, status_code=200)
+        return JSONResponse(content={"detail": "User not found"}, status_code=404)
 
-    @allure.step('Get user by id')
-    def get_user_by_id(self, id_user: str):
-        return self.get(url=Api._URL, endpoint=self._ENDPOINT_USER + id_user)
+    @router.get("/users", response_model=list[User])
+    def get_users(self):
+        users = self.read_users()
+        return Response(content=json.dumps(users), status_code=200, media_type="application/json")
 
-    @allure.step('Create user')
-    def create_user(self, param_request_body):
-        return self.post(url=Api._URL, endpoint=self._ENDPOINT_USER, json_body=param_request_body)
+    @router.get("/users/{user_id}", response_model=User)
+    def get_user(self, user_id: int):
+        users = self.read_users()
+        for user in users:
+            if user["id"] == user_id:
+                return JSONResponse(content=user, status_code=200)
+        return JSONResponse(content={"detail": "User not found"}, status_code=404)
 
-    @allure.step('Delete user')
-    def delete_user(self, id_user: str):
-        return self.delete(url=Api._URL, endpoint=self._ENDPOINT_USER + id_user)
+    @router.post("/users", response_model=User)
+    def create_user(self, user: dict):
+        # Validate required fields
+        required_fields = ["first_name", "email"]
+        for field in required_fields:
+            if field not in user:
+                return Response(content=json.dumps({"detail": f"Missing {field}"}), status_code=400,
+                                media_type="application/json")
 
-    @allure.step('Unsuccessful register')
-    def unsuccessful_register(self, param_request_body):
-        return self.post(url=Api._URL, endpoint=self._ENDPOINT_REGISTER_USER, json_body=param_request_body)
+        users = self.read_users()
+        users.append(user)
+        self.write_users(users)
+        return Response(content=json.dumps(user), status_code=201, media_type="application/json")
 
-    # ASSERTIONS:
+    @router.delete("/users/{user_id}", response_model=dict)
+    def delete_user(self, user_id: int):
+        users = self.read_users()
+        for user in users:
+            if user["id"] == user_id:
+                users.remove(user)
+                self.write_users(users)
+                return Response(content=json.dumps({"message": "User deleted"}), status_code=204,
+                                media_type="application/json")
+        return Response(content=json.dumps({"detail": "User not found"}), status_code=404,
+                        media_type="application/json")
 
-    @allure.step('Check the length of the user list')
-    def check_len_user_list(self, len_list):
-        actual_len = len(self.response.json()['data'])
-        assert len_list == actual_len
+    @router.post("/register", response_model=dict)
+    def register(self, user: dict):
+        user = RegisterUser(**user)
+        if not user.email:
+            return Response(content=json.dumps({"detail": "Missing email"}), status_code=400,
+                            media_type="application/json")
+        return Response(content=json.dumps({"message": "Successfully registered"}), status_code=200,
+                        media_type="application/json")
+
+    @router.post("/login", response_model=dict)
+    def login(self, user: dict):
+        user = LoginUser(**user)
+        if not user.email:
+            return Response(content=json.dumps({"detail": "Missing email"}), status_code=400,
+                            media_type="application/json")
+        return Response(
+            content=json.dumps({"message": "Successfully logged in", "token": data['token'],
+                                "user": user.model_dump()}),
+            status_code=200, media_type="application/json")
+
+    @router.put("/users/{user_id}", response_model=User)
+    def update_put_user(self, user_id: int, user: dict):
+        return self.update_user(user_id, user)
+
+    @router.patch("/users/{user_id}", response_model=dict)
+    def update_patch_user(self, user_id: int, user: dict):
+        return self.update_user(user_id, user)
 
 
 user_api = UserApi()
