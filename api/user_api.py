@@ -39,12 +39,12 @@ class UserApi:
                 return JSONResponse(content=existing_user, status_code=200)
         return JSONResponse(content={"detail": "User not found"}, status_code=404)
 
-    @router.get("/users", response_model=list[User])
+    @router.get("/users", response_model=list[User], summary="Get all users", description="Retrieve a list of all users.")
     def get_users(self):
         users = self.read_users()
         return Response(content=json.dumps(users), status_code=200, media_type="application/json")
 
-    @router.get("/users/{user_id}", response_model=User)
+    @router.get("/users/{user_id}", response_model=User, summary="Get user by ID", description="Retrieve a user by their ID.")
     def get_user(self, user_id: int):
         users = self.read_users()
         for user in users:
@@ -52,7 +52,7 @@ class UserApi:
                 return JSONResponse(content=user, status_code=200)
         return JSONResponse(content={"detail": "User not found"}, status_code=404)
 
-    @router.post("/users", response_model=User)
+    @router.post("/users", response_model=User, summary="Create a new user", description="Create a new user with the provided details.")
     def create_user(self, user: dict):
         # Validate required fields
         required_fields = ["first_name", "email"]
@@ -66,7 +66,7 @@ class UserApi:
         self.write_users(users)
         return Response(content=json.dumps(user), status_code=201, media_type="application/json")
 
-    @router.delete("/users/{user_id}", response_model=dict)
+    @router.delete("/users/{user_id}", response_model=dict, summary="Delete user by ID", description="Delete a user by their ID.")
     def delete_user(self, user_id: int):
         users = self.read_users()
         for user in users:
@@ -78,7 +78,7 @@ class UserApi:
         return Response(content=json.dumps({"detail": "User not found"}), status_code=404,
                         media_type="application/json")
 
-    @router.post("/register", response_model=dict)
+    @router.post("/register", response_model=dict, summary="Register a new user", description="Register a new user with the provided details.")
     def register(self, user: dict):
         user = RegisterUser(**user)
         if not user.email:
@@ -87,7 +87,7 @@ class UserApi:
         return Response(content=json.dumps({"message": "Successfully registered"}), status_code=200,
                         media_type="application/json")
 
-    @router.post("/login", response_model=dict)
+    @router.post("/login", response_model=dict, summary="Login a user", description="Login a user with the provided credentials.")
     def login(self, user: dict):
         user = LoginUser(**user)
         if not user.email:
@@ -98,11 +98,11 @@ class UserApi:
                                 "user": user.model_dump()}),
             status_code=200, media_type="application/json")
 
-    @router.put("/users/{user_id}", response_model=User)
+    @router.put("/users/{user_id}", response_model=User, summary="Update user by ID (PUT)", description="Update an existing user by their ID using PUT method.")
     def update_put_user(self, user_id: int, user: dict):
         return self.update_user(user_id, user)
 
-    @router.patch("/users/{user_id}", response_model=dict)
+    @router.patch("/users/{user_id}", response_model=dict, summary="Update user by ID (PATCH)", description="Update an existing user by their ID using PATCH method.")
     def update_patch_user(self, user_id: int, user: dict):
         return self.update_user(user_id, user)
 
