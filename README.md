@@ -1,36 +1,48 @@
 # User API
 
-## Описание
+## Description
 
-Микросервис для управления пользователями с использованием FastAPI.
+A microservice for user management using FastAPI.
 
-## Установка
+## Installation
 
-1. Клонируйте репозиторий:
+1. Clone the repository:
     ```bash
     git clone <repository_url>
     cd project
     ```
 
-2. Установите зависимости:
+2. Install dependencies:
     ```bash
-    pip install -r requirements.txt
+    poetry install
     ```
 
-## Запуск
+## Running
 
-1. Запустите сервер:
+1. Start the server:
     ```bash
     uvicorn main:app --reload
     ```
 
-2. Откройте в браузере:
+2. Open in the browser:
     ```plaintext
     http://127.0.0.1:8000/docs
     ```
 
-## Тестирование
+## Testing
 
-Запустите автотесты:
+Run the automated tests:
 ```bash
 pytest
+```
+
+## Tests and methods realized
+
+- [x] Create a new user
+- [x] List all users
+- [x] Get user by ID
+- [x] Update user by ID (PUT)
+- [x] Update user by ID (PATCH)
+- [x] Delete user by ID
+- [x] Register a new user
+- [x] Login a user
